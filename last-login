@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Read the most recent logins
+# Crappy workaround for scope issues (bug?) with pipes
+#   http://stackoverflow.com/questions/12819632/why-is-a-variable-changed-within-a-loop-unchanged-outside-the-loop
+
+current_tty=`tty`;
+
+current_session=""
+last_session=""
+live_sessions=()
+while read session; do
+	read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
+	if [[ "$HOST" == ":0" || "$HOST" == ":0.0" ]];then
+		# Ignore "local" logins
+		continue;
+	elif grep -q "still logged in" <<<$session; then
+		if [[ "/dev/$TTY" == "$current_tty" ]]; then
+			current_session="$session"
+		else
+			live_sessions+=("$session")
+		fi
+	else
+		last_session="$session"
+		#break; # NVM. Keep looking for more sessions
+	fi
+         # recent logins  # junk data at end # Hide the current login
+done < <(last -w -F $USER | head -n -2 )     # | tail -n +2 ) 
+
+if [[ -z "$last_session" ]]; then
+	if [ ${#live_sessions[@]} -eq 0 ]; then
+		echo "Welcome, this is your first time logging in!";
+		echo "If this is not your first time logging in, someone has tampered with the logs!";
+		exit 0;
+	else
+		# Special case where you are logged in from other machines,
+		# but don't have any previous logins to account for
+		echo "You have no previous logins that aren't currently open.";
+	fi
+fi
+
+#read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
+#live_sessions=`last -w -F $USER | head -n -2 | grep "still logged in"`
+
+# ----- LAST LOGIN
+
+read USER TTY HOST TIME <<< $(echo "$last_session" | awk '{ print $1, $2, $3, $15 }')
+LOGIN=$(echo "$last_session" | awk '{ print $5, $6, $8, $7 }')
+LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
+
+# Ignore comments         # Find the host   # Remove the host name
+friendly_host=`grep -v "^#" ~/.hostnames | grep "$HOST .*" | cut -d ' ' -f2-`
+since=`since "$LOGIN"`
+
+echo "Last logged in $since from ${friendly_host:-$HOST}"
+
+# ----- CURRENT LOGINS
+
+if [ ${#live_sessions[@]} -gt 0 ]; then
+    echo "You are still logged in on the following machines:"
+    for session in "${live_sessions[@]}"
+	do
+		read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
+		LOGIN=$(echo "$session" | awk '{ print $5, $6, $8, $7 }')
+		
+		# Ignore comments         # Find the host   # Remove the host name
+		friendly_host=`grep -v "^#" ~/.hostnames | grep "$HOST .*" | cut -d ' ' -f2-`
+		since=`since "$LOGIN"`
+		echo "  * Logged in $since from ${friendly_host:-$HOST} on $TTY";
+	done
+fi
+
