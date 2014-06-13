@@ -44,9 +44,8 @@ else
 	read USER TTY HOST TIME <<< $(echo "$last_session" | awk '{ print $1, $2, $3, $15 }')
 	LOGIN=$(echo "$last_session" | awk '{ print $5, $6, $8, $7 }')
 	LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
-
-	                   # Ignore comments         # Find the host   # Remove the host name
-	friendly_hostname=`grep -v "^#" ~/.hostnames | grep "$HOST .*" | cut -d ' ' -f2-`
+	
+	friendly_hostname=$(friendly-hostname "$HOST")
 	since=`since "$LOGIN"`
 
 	echo "Last logged in $since from ${friendly_hostname:-$HOST}"
@@ -61,8 +60,7 @@ if [ ${#live_sessions[@]} -gt 0 ]; then
 		read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
 		LOGIN=$(echo "$session" | awk '{ print $5, $6, $8, $7 }')
 		
-		                   # Ignore comments         # Find the host   # Remove the host name
-		friendly_hostname=`grep -v "^#" ~/.hostnames | grep "$HOST .*" | cut -d ' ' -f2-`
+		friendly_hostname=$(friendly-hostname "$HOST")
 		since=`since "$LOGIN"`
 		echo "  * Logged in $since from ${friendly_hostname:-$HOST} on $TTY";
 	done
