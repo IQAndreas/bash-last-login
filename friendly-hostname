@@ -10,10 +10,12 @@
 #	$1 - The host name to make "more friendly" (optional, see above notice)
 # 
 # Returns:
-#	The "friendly name", otherwise outputs nothing and returns an exit value of 1.
+#	The "friendly name", otherwise outputs nothing.
 #	If you want to get the "friendly name" only if available, use code like this:
 #		$ friendly_hostname=$(friendly-hostname "$host")
 #		$ echo "${friendly_hostname:-$host}"
+#	An exit code of 1 is returned if either the `.hostnames` file does not exist,
+#	or if there was some error thrown while parsing the output.
 # 
 # Example usage - Assuming the `.hostnames` file looks something like this:
 #	localhost this computer
@@ -29,6 +31,11 @@
 #	$ friendly-hostname "123-24-248-112.client.mchsi.com"   # Output: home
 #	$ friendly-hostname "dsl-123-53.geneseo.net"            # Output: work
 #	$ friendly-hostname "172.56.2x.yz"                      # Output: Bob's house
+
+if [[ ! -f ~/.hostnames ]]; then
+    # `.hostnames` file not found.
+    exit 1;
+fi
 
 hostname=${1:-$(hostname)}
 
