@@ -33,31 +33,8 @@ while read session; do
          # recent logins  # junk data at end # Hide the current login
 done < <(last -w -F $USER | head -n -2 )     # | tail -n +2 ) 
 
-if [[ ${#dead_sessions[@]} -eq 0 ]]; then
-	if [ ${#live_sessions[@]} -eq 0 ]; then
-		echo -e "Welcome, this is your ${BOLD}first time${RESET} logging in!";
-		echo -e "If this is not your first time logging in, someone has tampered with the logs!";
-		exit 0;
-	else
-		# Special case where you are logged in from other machines,
-		# but don't have any previous logins to account for
-		echo -e "You have ${BOLD}no previous logins${RESET} that aren't currently open.";
-	fi
-else
-	# ----- LAST LOGIN
-
-	last_session=${dead_sessions[0]}
-	read USER TTY HOST TIME <<< $(echo "$last_session" | awk '{ print $1, $2, $3, $15 }')
-	LOGIN=$(echo "$last_session" | awk '{ print $5, $6, $8, $7 }')
-	LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
-	
-	since=`since "$LOGIN"`
-	echo -e "Last logged in ${BOLD}$since${RESET} from ${BOLD}${YELLOW}$HOST${RESET}"
-fi
-
-# ----- CURRENT LOGINS
-
 if [ ${#live_sessions[@]} -gt 0 ]; then
+	# ----- CURRENT LOGINS
     echo -e "You are ${BOLD}${RED}still logged in${RESET} on the following machines:"
     for session in "${live_sessions[@]}"
 	do
@@ -67,5 +44,23 @@ if [ ${#live_sessions[@]} -gt 0 ]; then
 		since=`since "$LOGIN"`
 		echo -e "  ${BOLD}*${RESET} Logged in ${BOLD}$since${RESET} from ${BOLD}${YELLOW}$HOST${RESET} on ${BOLD}${YELLOW}$TTY${RESET}";
 	done
+	
+elif [[ ${#dead_sessions[@]} -eq 0 ]]; then
+	# ----- NO CURRENT OR PREVIOUS LOGINS
+	echo -e "Welcome, this is your ${BOLD}first time${RESET} logging in!";
+	echo -e "If this is not your first time logging in, someone has tampered with the logs!";
+	exit 0;
+	
+else
+	# ----- LAST LOGIN
+	last_session=${dead_sessions[0]}
+	read USER TTY HOST TIME <<< $(echo "$last_session" | awk '{ print $1, $2, $3, $15 }')
+	LOGIN=$(echo "$last_session" | awk '{ print $5, $6, $8, $7 }')
+	LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
+	
+	since=`since "$LOGIN"`
+	echo -e "Last logged in ${BOLD}$since${RESET} from ${BOLD}${YELLOW}$HOST${RESET}"
+	
 fi
+
 
