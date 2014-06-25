@@ -45,10 +45,8 @@ else
 	LOGIN=$(echo "$last_session" | awk '{ print $5, $6, $8, $7 }')
 	LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
 	
-	friendly_hostname=$(friendly-hostname "$HOST")
 	since=`since "$LOGIN"`
-
-	echo "Last logged in $since from ${friendly_hostname:-$HOST}"
+	echo "Last logged in $since from $HOST"
 fi
 
 # ----- CURRENT LOGINS
@@ -60,9 +58,8 @@ if [ ${#live_sessions[@]} -gt 0 ]; then
 		read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
 		LOGIN=$(echo "$session" | awk '{ print $5, $6, $8, $7 }')
 		
-		friendly_hostname=$(friendly-hostname "$HOST")
 		since=`since "$LOGIN"`
-		echo "  * Logged in $since from ${friendly_hostname:-$HOST} on $TTY";
+		echo "  * Logged in $since from $HOST on $TTY";
 	done
 fi
 
