@@ -4,6 +4,12 @@
 # Crappy workaround for scope issues (bug?) with pipes
 #   http://stackoverflow.com/questions/12819632/why-is-a-variable-changed-within-a-loop-unchanged-outside-the-loop
 
+# Terminal colors
+RESET="\e[0m"
+BOLD="\e[1m"
+RED="\e[31m"
+YELLOW="\e[33m"
+
 current_tty=`tty`;
 
 current_session=""
@@ -29,13 +35,13 @@ done < <(last -w -F $USER | head -n -2 )     # | tail -n +2 )
 
 if [[ ${#dead_sessions[@]} -eq 0 ]]; then
 	if [ ${#live_sessions[@]} -eq 0 ]; then
-		echo "Welcome, this is your first time logging in!";
-		echo "If this is not your first time logging in, someone has tampered with the logs!";
+		echo -e "Welcome, this is your ${BOLD}first time${RESET} logging in!";
+		echo -e "If this is not your first time logging in, someone has tampered with the logs!";
 		exit 0;
 	else
 		# Special case where you are logged in from other machines,
 		# but don't have any previous logins to account for
-		echo "You have no previous logins that aren't currently open.";
+		echo -e "You have ${BOLD}no previous logins${RESET} that aren't currently open.";
 	fi
 else
 	# ----- LAST LOGIN
@@ -46,20 +52,20 @@ else
 	LOGOUT=$(echo "$last_session" | awk '{ print $11, $12, $14, $13 }')
 	
 	since=`since "$LOGIN"`
-	echo "Last logged in $since from $HOST"
+	echo -e "Last logged in ${BOLD}$since${RESET} from ${BOLD}${YELLOW}$HOST${RESET}"
 fi
 
 # ----- CURRENT LOGINS
 
 if [ ${#live_sessions[@]} -gt 0 ]; then
-    echo "You are still logged in on the following machines:"
+    echo -e "You are ${BOLD}${RED}still logged in${RESET} on the following machines:"
     for session in "${live_sessions[@]}"
 	do
 		read USER TTY HOST TIME <<< $(echo "$session" | awk '{ print $1, $2, $3, $15 }')
 		LOGIN=$(echo "$session" | awk '{ print $5, $6, $8, $7 }')
 		
 		since=`since "$LOGIN"`
-		echo "  * Logged in $since from $HOST on $TTY";
+		echo -e "  ${BOLD}*${RESET} Logged in ${BOLD}$since${RESET} from ${BOLD}${YELLOW}$HOST${RESET} on ${BOLD}${YELLOW}$TTY${RESET}";
 	done
 fi
 
